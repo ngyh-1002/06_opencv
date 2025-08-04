@@ -204,4 +204,88 @@ cv2.SimpleBlobDetector_create([params])
 | SimpleBlob   | 선택적   | 느림    | 크기 등 다양한 속성 | ❌          |
 
 ---
+네, 이 자료도 특징 디스크립터(SIFT, SURF, ORB)에 대한 아주 체계적인 정리입니다. 내용을 요약하면 다음과 같습니다:
+
+---
+
+## 📌 핵심 요약
+
+### 🧠 **특징점(keypoint)이란?**
+
+* 이미지에서 **두드러지는 지점**, 예: 코너, 경계 등.
+* 매칭할 때 서로 비교되는 "기준점".
+
+### 🔍 **특징 디스크립터(descriptor)란?**
+
+* 특징점 주변 픽셀의 **방향, 밝기, 경사도** 등의 정보를 **벡터**로 표현.
+* 예: 4x4 블록 × 8방향 = 128차원의 벡터 (SIFT 기준)
+
+---
+
+## 💡 특징 디스크립터 검출 알고리즘 비교
+
+| 항목       | SIFT                              | SURF                       | ORB                        |
+| -------- | --------------------------------- | -------------------------- | -------------------------- |
+| 정식 이름    | Scale-Invariant Feature Transform | Speeded Up Robust Features | Oriented and Rotated BRIEF |
+| 특성       | 크기, 회전 불변<br>정확도 높음               | 속도 개선, 필터 크기 변화            | 속도 빠름, 이진 디스크립터            |
+| 속도       | 느림                                | 보통                         | 빠름                         |
+| 디스크립터 길이 | 128 (float)                       | 64 또는 128 (float)          | 32 (binary)                |
+| 사용 가능 여부 | OpenCV-contrib 필요                 | OpenCV-contrib 필요          | 기본 OpenCV 포함               |
+| 라이선스     | 특허 문제 있음                          | 특허 문제 있음                   | 오픈소스, 자유 사용 가능             |
+
+---
+
+## 🧪 예제 코드 주요 흐름
+
+공통 단계:
+
+1. 이미지 읽기
+2. `gray = cv2.cvtColor(...)` → 그레이스케일 변환
+3. `detector.detectAndCompute()` → 특징점 + 디스크립터 추출
+4. `cv2.drawKeypoints()` → 시각화
+5. `cv2.imshow()` → 출력
+
+각 알고리즘 별 생성자 예시:
+
+### ✅ SIFT
+
+```python
+sift = cv2.xfeatures2d.SIFT_create()
+keypoints, descriptor = sift.detectAndCompute(gray, None)
+```
+
+### ✅ SURF
+
+```python
+surf = cv2.xfeatures2d.SURF_create(1000, 3, True, True)
+keypoints, descriptor = surf.detectAndCompute(gray, None)
+```
+
+### ✅ ORB
+
+```python
+orb = cv2.ORB_create()
+keypoints, descriptor = orb.detectAndCompute(gray, None)
+```
+
+---
+
+## ⚠️ 주의 사항
+
+* **SIFT와 SURF는 OpenCV의 `contrib` 모듈**을 설치해야 사용 가능:
+
+  ```bash
+  pip install opencv-contrib-python
+  ```
+* ORB는 기본 OpenCV로도 작동.
+
+---
+
+## 📌 실제 프로젝트 적용 팁
+
+* 실시간 시스템, 속도 중요 → **ORB**
+* 정확도, 복잡한 환경 대응 → **SIFT 또는 SURF**
+* GPU 지원 필요시 OpenCV CUDA 또는 Deep Learning 기반 대안 고려 (e.g. SuperPoint, D2-Net 등)
+
+---
 
