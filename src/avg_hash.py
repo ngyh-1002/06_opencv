@@ -14,7 +14,7 @@ avg = gray.mean()
 bin = 1 * (gray >avg)
 print(bin)
 
-# 2진수 문자여ㅑㄹ을 16진수 문자열로 변환
+# 2진수 문자열을 16진수 문자열로 변환
 dhash = []
 for row in bin.tolist():
     s = ''.join([str(i) for i in row])
