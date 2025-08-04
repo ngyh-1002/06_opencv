@@ -3,6 +3,8 @@
 import cv2
 import numpy as np
 import glob
+import time
+
 
 # 영상 읽기 및 표시
 
@@ -43,6 +45,8 @@ while cap.isOpened() and not break_outer_loop:
     if img1 is None:  # 등록된 이미지 없음, 카메라 바이패스
         res = frame
     else:             # 등록된 이미지 있는 경우, 매칭 시작
+
+        start_time = time.time()
 
         # [step1]
         gray1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY) # 참조 이미지
@@ -110,8 +114,10 @@ while cap.isOpened() and not break_outer_loop:
                            (0,255,0), 2, cv2.LINE_AA)
 
                 cv2.imshow('Result', cover)
+                search_time = time.time() - start_time
                 cv2.waitKey(0)  # 사용자가 아무 키나 누를 때까지 대기
                 break_outer_loop = True
+                print(f"검색 시간: {search_time:.2f}초")
                 break
 
 
