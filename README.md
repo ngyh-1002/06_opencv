@@ -674,4 +674,77 @@ cv2.line(frame, (x, y), (x+dx, y+dy), (0,255,0), 2)
 
 ---
 
+### ✅ OpenCV Tracking API 요약
 
+OpenCV는 객체 추적을 위한 **Tracking API**를 제공합니다. 별도의 알고리즘 이해 없이도 객체만 지정하면 자동으로 추적됩니다.
+
+#### 주요 트래커 종류 및 생성자
+
+| 알고리즘       | 생성자 함수                           | 설명                              |
+| ---------- | -------------------------------- | ------------------------------- |
+| Boosting   | `cv2.TrackerBoosting_create()`   | AdaBoost 기반                     |
+| MIL        | `cv2.TrackerMIL_create()`        | Multiple Instance Learning      |
+| KCF        | `cv2.TrackerKCF_create()`        | 커널 기반 상관 필터                     |
+| TLD        | `cv2.TrackerTLD_create()`        | Tracking + Learning + Detection |
+| MedianFlow | `cv2.TrackerMedianFlow_create()` | 양방향 추적                          |
+| GOTURN     | `cv2.TrackerGOTURN_create()`     | CNN 기반 (OpenCV 3.4에서 버그 있음)     |
+| CSRT       | `cv2.TrackerCSRT_create()`       | 높은 정확도 (CSRT)                   |
+| MOSSE      | `cv2.TrackerMOSSE_create()`      | 빠른 속도, 그레이스케일 기반                |
+
+#### 핵심 메서드
+
+* `tracker.init(img, bbox)`: 추적 시작 (객체 초기 위치 지정)
+* `tracker.update(img)`: 새 프레임에서 객체 위치 업데이트
+
+---
+
+### ⚠️ OpenCV 4.5 이상부터 변경사항: `legacy` 모듈 사용
+
+OpenCV 4.5 이후 버전부터 **객체 추적 API는 `cv2.legacy` 모듈로 이동**되었습니다. 예전처럼 `cv2.TrackerXXX_create()`를 그대로 쓰면 `AttributeError`가 발생합니다.
+
+#### 예시 (변경 전 → 변경 후)
+
+```python
+# 변경 전
+tracker = cv2.TrackerCSRT_create()
+
+# 변경 후
+tracker = cv2.legacy.TrackerCSRT_create()
+```
+
+또한, `cv2.legacy.TrackerCSRT()` 클래스로 직접 객체를 생성할 수도 있습니다:
+
+```python
+tracker = cv2.legacy.TrackerCSRT()
+tracker.init(frame, bbox)
+```
+
+---
+
+### 🔁 기존 OpenCV 삭제 + `opencv-contrib-python` 설치 방법
+
+기존의 OpenCV는 `opencv-python`만 설치되어 있어서 Tracking API 일부 기능이 **누락**되어 있습니다. `opencv-contrib-python` 패키지에는 **추적기(Trackers), SIFT, SURF** 등 추가 모듈이 포함되어 있습니다.
+
+#### 1. 기존 OpenCV 삭제
+
+```bash
+pip uninstall opencv-python
+pip uninstall opencv-contrib-python  # 혹시 설치되어 있다면 같이 삭제
+```
+
+#### 2. 최신 버전으로 재설치
+
+```bash
+pip install opencv-contrib-python
+```
+
+> ✅ 이때 `opencv-python`은 자동으로 같이 설치되며, `contrib` 패키지가 우선 적용됩니다.
+
+---
+
+### 📌 최종 요약 정리
+
+* OpenCV에서 다양한 객체 추적 알고리즘을 `Tracking API`로 제공
+* OpenCV 4.5+에서는 트래커가 `cv2.legacy`로 이동됨 → `cv2.legacy.TrackerXXX_create()`로 호출
+* 정확한 추적을 위해 `opencv-contrib-python` 설치 필수
+* 사용 중 오류 발생 시 `GOTURN`은 피할 것 (일부 버전 버그)
