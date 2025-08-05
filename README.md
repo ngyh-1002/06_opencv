@@ -484,7 +484,193 @@ matches = sorted(matches, key=lambda x: x.distance)
 * **RANSAC**을 통한 정합성 확인
 * **거리 임계값**으로 필터링
 
-예시는 이후 포스팅에서 다룹니다.
+---
+
+### 📌 Background Subtraction (배경 제거) - OpenCV
+
+배경 제거(Background Subtraction)는 **영상에서 움직이는 객체(전경)를 검출하기 위해 배경을 제거**하는 기법입니다.
+이 방법은 객체 추적(Object Tracking)의 전처리 과정으로 매우 중요하며, OpenCV에서는 다음과 같은 두 가지 대표적인 알고리즘이 사용됩니다:
+
+---
+
+### 🔧 1. `BackgroundSubtractorMOG`
+
+* **함수**: `cv2.bgsegm.createBackgroundSubtractorMOG()`
+* **기반 논문**: KadewTraKuPong and Bowden (2001)
+* **설정 가능 파라미터**:
+
+  * `history=200`: 히스토리 프레임 수
+  * `nmixtures=5`: 가우시안 혼합 개수
+  * `backgroundRatio=0.7`: 배경 비율
+  * `noiseSigma=0`: 노이즈 강도 (0이면 자동)
+* **특징**:
+
+  * 간단하고 빠름
+  * 그림자 탐지 불가
+* **사용 예시**:
+
+```python
+fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()
+fgmask = fgbg.apply(frame)
+```
+
+---
+
+### 🔧 2. `BackgroundSubtractorMOG2`
+
+* **함수**: `cv2.createBackgroundSubtractorMOG2()`
+* **기반 논문**: Zivkovic (2004, 2006)
+* **설정 가능 파라미터**:
+
+  * `history=500`: 히스토리 프레임 수
+  * `varThreshold=16`: 픽셀 분산 임계값
+  * `detectShadows=True`: 그림자 탐지 여부
+* **특징**:
+
+  * 그림자 탐지 가능 (회색으로 표시됨)
+  * 빛 변화에 강함
+* **사용 예시**:
+
+```python
+fgbg = cv2.createBackgroundSubtractorMOG2()
+fgmask = fgbg.apply(frame)
+```
+
+---
+
+### ▶️ 공통 사용 방법
+
+```python
+import cv2
+
+cap = cv2.VideoCapture('walking.avi')
+fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()  # 또는 createBackgroundSubtractorMOG2()
+
+while cap.isOpened():
+    ret, frame = cap.read()
+    if not ret:
+        break
+    fgmask = fgbg.apply(frame)
+    cv2.imshow('Original', frame)
+    cv2.imshow('Foreground Mask', fgmask)
+    if cv2.waitKey(1) & 0xFF == 27:  # ESC 키로 종료
+        break
+
+cap.release()
+cv2.destroyAllWindows()
+```
+
+---
+
+### ✅ 참고
+
+* `MOG2`는 `MOG`보다 더 진보된 방식이며, **조명 변화**와 **그림자 처리**가 필요한 환경에서 유리합니다.
+* 간단한 처리 속도를 원한다면 `MOG`, 정교한 추적이 필요하다면 `MOG2`를 추천합니다.
+
+--
+
+---
+# 🎥 Optical Flow (광학 흐름) - OpenCV
+
+> 객체 추적(Object Tracking)을 위한 영상 처리 기법  
+> 참고 자료: Baek Kyun Shin 블로그, *파이썬으로 만드는 OpenCV 프로젝트* (이세우 저)
+
+---
+
+## 📌 Optical Flow란?
+
+- **광학 흐름(Optical Flow)**: 연속된 영상에서 **픽셀의 이동 방향과 크기**를 추정하는 기술  
+- 예: 사람이 걷는 영상에서, 각 프레임마다 사람의 위치 변화량을 추적 가능
+
+### ✅ 가정 조건
+1. **픽셀 밝기 불변**: 시간 흐름에도 픽셀의 밝기(intensity)는 일정하다.
+2. **이웃 픽셀의 유사 움직임**: 인접한 픽셀은 비슷하게 움직인다.
+
+---
+
+## 🧠 Optical Flow 방식
+
+### 🔹 1. 희소 광학 흐름 (Sparse Optical Flow)
+- **일부 특징점에 대해서만** 움직임을 추적
+- 대표 알고리즘: `Lucas-Kanade`
+- 특징점 검출: `cv2.goodFeaturesToTrack()`
+- 흐름 계산: `cv2.calcOpticalFlowPyrLK()`
+
+#### 📄 주요 코드
+
+```python
+prevPt = cv2.goodFeaturesToTrack(prevImg, maxCorners=200, qualityLevel=0.01, minDistance=10)
+nextPt, status, err = cv2.calcOpticalFlowPyrLK(prevImg, nextImg, prevPt, None, criteria=term_criteria)
+````
+
+* **status==1**: 추적 성공한 점
+* **term\_criteria**: 반복 종료 조건 설정
+
+#### 📌 장점 / 단점
+
+| 장점     | 단점                          |
+| ------ | --------------------------- |
+| 빠름     | 전체 장면 추적 불가                 |
+| 적은 계산량 | 큰 움직임에 약함 (이미지 피라미드로 보완 가능) |
+
+---
+
+### 🔹 2. 밀집 광학 흐름 (Dense Optical Flow)
+
+* **영상의 모든 픽셀**을 대상으로 흐름 추정
+* 대표 알고리즘: `Farneback` (cv2.calcOpticalFlowFarneback)
+
+#### 📄 주요 코드
+
+```python
+flow = cv2.calcOpticalFlowFarneback(prev, next, None,
+    pyr_scale=0.5, levels=3, winsize=15,
+    iterations=3, poly_n=5, poly_sigma=1.1,
+    flags=cv2.OPTFLOW_FARNEBACK_GAUSSIAN)
+```
+
+* `flow[y, x]`: (dx, dy), 픽셀 이동 벡터
+
+#### 📌 시각화
+
+```python
+cv2.line(frame, (x, y), (x+dx, y+dy), (0,255,0), 2)
+```
+
+* 격자(grid) 간격을 두고 화살표(선)로 시각화
+
+#### 📌 장점 / 단점
+
+| 장점            | 단점     |
+| ------------- | ------ |
+| 전체 움직임 파악 가능  | 속도 느림  |
+| 별도 특징점 검출 불필요 | 계산량 많음 |
+
+---
+
+## 🔍 정리 비교
+
+| 항목        | Lucas-Kanade                 | Farneback                        |
+| --------- | ---------------------------- | -------------------------------- |
+| 방식        | 희소 (Sparse)                  | 밀집 (Dense)                       |
+| 계산 대상     | 특징점                          | 모든 픽셀                            |
+| 속도        | 빠름                           | 느림                               |
+| 정밀도       | 중간                           | 높음                               |
+| OpenCV 함수 | `cv2.calcOpticalFlowPyrLK()` | `cv2.calcOpticalFlowFarneback()` |
+
+---
+
+## ▶️ 예제 영상: `walking.avi`
+
+* **희소 광학 흐름**: 움직이는 사람의 특징점만 추적
+* **밀집 광학 흐름**: 전체 프레임 내 픽셀 이동량 시각화
+
+---
+
+## 🏁 Tip
+
+* **추적 리셋**: ESC 키 또는 Backspace 키 활용 (예제 코드 내 구현)
+* **윈도우 크기 조절**: `winSize`, `maxLevel` 등을 조절해 성능 최적화 가능
 
 ---
 
