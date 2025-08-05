@@ -289,7 +289,6 @@ keypoints, descriptor = orb.detectAndCompute(gray, None)
 
 ---
 
-물론입니다! 위 내용을 요약한 형태로, GitHub 프로젝트에 적합한 `README.md` 형식으로 정리해드릴게요:
 
 ---
 
