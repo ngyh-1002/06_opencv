@@ -388,5 +388,104 @@ matches = matcher.match(desc1, desc2)
 
 ---
 
+## 🧠 Feature Matching with OpenCV
+
+본 문서는 OpenCV에서 제공하는 **특징 매칭(Feature Matching)** 알고리즘의 핵심 내용을 정리한 것입니다. 특히, SIFT, SURF, ORB 등의 디스크립터와 함께 `BFMatcher`, `FlannBasedMatcher`를 사용하여 두 이미지 간의 유사한 부분을 효과적으로 찾는 방법을 다룹니다.
+
+---
+
+### 📌 특징 매칭이란?
+
+두 이미지에서 특징점(Feature point)을 추출하고, 각 특징점의 디스크립터를 기반으로 유사한 점끼리 매칭하여 물체나 장면을 식별하는 기법입니다.
+
+---
+
+### 🔧 주요 함수 설명
+
+| 함수                         | 설명                        |
+| -------------------------- | ------------------------- |
+| `match()`                  | 가장 유사한 하나의 매칭을 반환         |
+| `knnMatch(k=2)`            | 각 디스크립터에 대해 k개의 최근접 이웃 반환 |
+| `radiusMatch(maxDistance)` | 지정된 거리 이내의 매칭만 반환         |
+
+---
+
+### 🔎 DMatch 객체란?
+
+각 매칭은 `cv2.DMatch` 객체로 표현되며 다음과 같은 정보를 포함합니다:
+
+* `queryIdx`: 기준 이미지의 디스크립터 인덱스
+* `trainIdx`: 대상 이미지의 디스크립터 인덱스
+* `distance`: 디스크립터 간 거리 (값이 작을수록 유사)
+
+---
+
+### 🖼️ 매칭 결과 시각화
+
+```python
+cv2.drawMatches(img1, kp1, img2, kp2, matches, outImg, flags=...)
+```
+
+* `DRAW_MATCHES_FLAGS_NOT_DRAW_SINGLE_POINTS`: 매칭되지 않은 점 생략
+* `DRAW_RICH_KEYPOINTS`: 특징점의 크기와 방향 표시
+
+---
+
+## ✅ Brute-Force Matcher (BFMatcher)
+
+* 모든 디스크립터를 비교하여 가장 유사한 것 찾기
+* 정확도는 높지만 느림
+* `crossCheck=True`로 설정하면 양방향 검증을 통해 매칭 품질 향상
+
+### 📌 normType 설정
+
+| 디스크립터     | normType                                  |
+| --------- | ----------------------------------------- |
+| SIFT/SURF | `cv2.NORM_L1` 또는 `cv2.NORM_L2`            |
+| ORB       | `cv2.NORM_HAMMING` 또는 `cv2.NORM_HAMMING2` |
+
+### 💻 사용 예시
+
+```python
+bf = cv2.BFMatcher(normType, crossCheck=True)
+matches = bf.match(desc1, desc2)
+matches = sorted(matches, key=lambda x: x.distance)
+```
+
+---
+
+## 🚀 FLANN-Based Matcher (FlannBasedMatcher)
+
+* 큰 이미지나 많은 디스크립터를 다룰 때 빠르고 효율적
+* **근사 최근접 이웃(Approximate Nearest Neighbor)** 탐색 사용
+
+### 📌 index\_params 설정
+
+| 디스크립터     | indexParams 설정                                                                                 |
+| --------- | ---------------------------------------------------------------------------------------------- |
+| SIFT/SURF | `{'algorithm':1, 'trees':5}` (`algorithm=1`: KDTree)                                           |
+| ORB       | `{'algorithm':6, 'table_number':6, 'key_size':12, 'multi_probe_level':1}` (`algorithm=6`: LSH) |
+
+### 💻 사용 예시
+
+```python
+flann = cv2.FlannBasedMatcher(indexParams, searchParams)
+matches = flann.match(desc1, desc2)
+matches = sorted(matches, key=lambda x: x.distance)
+```
+
+---
+
+## ⚠️ 잘못된 매칭 제거
+
+특징 매칭만으로는 잘못된 결과가 포함될 수 있습니다. 따라서 **후처리**가 필요합니다:
+
+* **Lowe's Ratio Test** 적용
+* **RANSAC**을 통한 정합성 확인
+* **거리 임계값**으로 필터링
+
+예시는 이후 포스팅에서 다룹니다.
+
+---
 
 
