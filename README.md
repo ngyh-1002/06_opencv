@@ -289,3 +289,105 @@ keypoints, descriptor = orb.detectAndCompute(gray, None)
 
 ---
 
+물론입니다! 위 내용을 요약한 형태로, GitHub 프로젝트에 적합한 `README.md` 형식으로 정리해드릴게요:
+
+---
+
+## 🧠 OpenCV Feature Matching Summary
+
+이 문서는 OpenCV를 활용한 **특징 매칭(Feature Matching)** 기법을 간단히 정리한 것입니다. 주로 `SIFT`, `SURF`, `ORB` 디스크립터를 사용하며, 매칭 알고리즘은 `BFMatcher`와 `FlannBasedMatcher` 두 가지를 중심으로 다룹니다.
+
+---
+
+### 📌 특징 매칭이란?
+
+두 이미지에서 특징점과 디스크립터를 추출하고, 이들을 비교하여 유사한 부분을 짝지어 객체를 식별하는 기법입니다.
+
+---
+
+### 🔧 특징 매칭 함수
+
+OpenCV에서 제공하는 주요 매칭 함수:
+
+| 함수                         | 설명                 |
+| -------------------------- | ------------------ |
+| `match()`                  | 가장 유사한 하나의 매칭 반환   |
+| `knnMatch(k=2)`            | k개의 최근접 이웃 반환      |
+| `radiusMatch(maxDistance)` | 특정 거리 이내의 디스크립터 반환 |
+
+---
+
+### 🔍 DMatch 객체
+
+각 매칭은 `cv2.DMatch`로 표현됨:
+
+* `queryIdx`: 기준 이미지 디스크립터 인덱스
+* `trainIdx`: 대상 이미지 디스크립터 인덱스
+* `distance`: 디스크립터 간 거리
+
+---
+
+### 🖼️ 매칭 시각화
+
+```python
+cv2.drawMatches(img1, kp1, img2, kp2, matches, None, flags=...)
+```
+
+* `DRAW_MATCHES_FLAGS_NOT_DRAW_SINGLE_POINTS`: 한쪽만 있는 매칭 생략
+* `DRAW_RICH_KEYPOINTS`: 키포인트 크기/방향 표시
+
+---
+
+## 💥 매칭 방법별 예제
+
+---
+
+### ✅ 1. Brute-Force Matcher (`BFMatcher`)
+
+모든 디스크립터를 전수 비교하는 방식. 정확도 높지만 느림.
+
+#### 🎯 사용법:
+
+```python
+matcher = cv2.BFMatcher(normType, crossCheck=True)
+matches = matcher.match(desc1, desc2)
+```
+
+* `SIFT`, `SURF`: `NORM_L1`, `NORM_L2`
+* `ORB`: `NORM_HAMMING`, `NORM_HAMMING2`
+
+
+
+---
+
+### 🚀 2. FLANN Matcher (`FlannBasedMatcher`)
+
+근사 최근접 검색을 위한 빠른 매칭. 대용량 이미지에 유리.
+
+#### 🎯 사용법:
+
+```python
+matcher = cv2.FlannBasedMatcher(indexParams, searchParams)
+matches = matcher.match(desc1, desc2)
+```
+
+#### 🛠️ 설정값
+
+| 디스크립터       | index\_params 설정                                                            |
+| ----------- | --------------------------------------------------------------------------- |
+| SIFT / SURF | `algorithm=1` (KDTree), `trees=5`                                           |
+| ORB         | `algorithm=6` (LSH), `table_number=6`, `key_size=12`, `multi_probe_level=1` |
+
+
+---
+
+## ⚠️ 잘못된 매칭 제거
+
+* 단순히 매칭된 결과 중 일부는 오류일 수 있음
+* 예: 전혀 관련 없는 객체 간 매칭
+* **후처리 (예: Lowe’s ratio test 등)** 필요 → 다음 단계에서 다룸
+
+---
+
+
+
